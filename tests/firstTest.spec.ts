@@ -2,17 +2,16 @@ import { test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("localhost:4200/");
+  await page.getByText("Forms").click();
+  await page.getByText("Form Layouts").click();
 });
 
 test.describe("suite 1", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.getByText("Forms").click();
-  });
+  test.beforeEach(async ({ page }) => {});
 
   test("the first test", async ({ page }) => {
     // if the return type is a Promise, then you must await
     // If not...don't use await!
-    await page.getByText("Form Layouts").click();
   });
 
   test("navigate to datepicker page", async ({ page }) => {
