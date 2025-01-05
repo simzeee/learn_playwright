@@ -1,7 +1,9 @@
-import { test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+
+test.setTimeout(10000);
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("localhost:4200/");
+  await page.goto("http://localhost:4200/");
   await page.getByText("Forms").click();
   await page.getByText("Form Layouts").click();
 });
@@ -87,7 +89,7 @@ test("selecting parent elements", async ({ page }) => {
   await page
     .locator("nb-card")
     .filter({ has: page.locator("nb-checkbox") })
-    .filter({ hasText: "sign-in" })
+    .filter({ hasText: "Sign In" })
     .getByRole("textbox", { name: "Email" })
     .click();
 
@@ -98,4 +100,45 @@ test("selecting parent elements", async ({ page }) => {
     .locator("..")
     .getByRole("textbox", { name: "Email" })
     .click();
+});
+
+// reusing locators to reduce copy/pasting
+
+test("test reusing locators", async ({ page }) => {
+  const basicForm = page.locator("nb-card").filter({ hasText: "Basic Form" });
+  const emailField = basicForm.getByRole("textbox", { name: "Email" });
+
+  await emailField.fill("test@test.com");
+
+  await basicForm.getByRole("textbox", { name: "Password" }).fill("Welcome123");
+  await basicForm.locator("nb-checkbox").click();
+  await basicForm.getByRole("button").click();
+
+  await expect(emailField).toHaveValue("test@test.com");
+});
+
+// extract values from the DOM
+
+test("extracting values from DOM elements", async ({ page }) => {
+  const basicForm = page.locator("nb-card").filter({ hasText: "Basic form" });
+  // single text value
+  const buttonText = await basicForm.locator("button").textContent();
+
+  expect(buttonText).toEqual("Submit");
+
+  // get all text values-get all and then verify one of them has a certain text value
+
+  const allRadioButtonLabels = await page.locator("nb-radio").allTextContents();
+  // console.log(Array.isArray(allRadioButtonLabels)); => true
+  expect(allRadioButtonLabels).toContain("Option 1");
+
+  // input value
+  const emailField = basicForm.getByRole("textbox", { name: "Email" });
+  await emailField.fill("test@test.com");
+  const emailValue = await emailField.inputValue();
+  expect(emailValue).toEqual("test@test.com");
+
+  // get HTML attribute value
+  const placeholderValue = await emailField.getAttribute("placeholder");
+  expect(placeholderValue).toEqual("Email");
 });
